@@ -9,7 +9,6 @@ from NN_GA import Network
 
 COLORS = ["gray", "green", "yellow", "blue", "orange", "purple"]
 
-
 class Tetris:
     FIELD_HEIGHT = 20
     FIELD_WIDTH = 10
@@ -25,10 +24,11 @@ class Tetris:
     ]
     TETROMINOS_SHAPE = ["O", "L", "J", "Z", "T", "S", "I"]
 
-    def __init__(self):
+    def __init__(self, generation=0):
         self.field = [
             [0 for c in range(Tetris.FIELD_WIDTH)] for r in range(Tetris.FIELD_HEIGHT)
         ]
+        self.generation = generation
         self.score = 0
         self.level = 0
         self.total_lines_eliminated = 0
@@ -134,26 +134,24 @@ class Tetris:
 
 
 class Application(tk.Frame):
-    def __init__(self, ai_model= None, master=None):
+    def __init__(self, generation=0, ai_model=None, master=None):
         super().__init__(master)
-        if ai_model:
-            self.network = ai_model
-        else:
-            self.network = Network(13, 1, -1, 1)
-        self.tetris = Tetris()
+        self.network = ai_model
+        self.tetris = Tetris(generation=generation)
         self.pack()
         self.create_widgets()
         self.update_clock()
 
     def update_clock(self):
-        # self.tetris.move(1, 0)
+        if not self.winfo_exists():
+            return
         self.update()
-        if self.tetris.game_over or self.tetris.score > 9999999:
-            self.master.destroy()
+        if self.tetris.game_over or self.tetris.score > 9999999999999:
+            self.master.destroy()  
             return
         self.AI_combinations()
-        # self.master.after(int(100 * (0.66**self.tetris.level)), self.update_clock)
-        self.master.after(int(1), self.update_clock)
+        if self.winfo_exists():
+            self.master.after(1, self.update_clock)  # 100 ms
 
     def create_widgets(self):
         PIECE_SIZE = 30
@@ -188,14 +186,16 @@ class Application(tk.Frame):
         self.game_over_msg.pack(side="top")
 
     def update(self):
+        if not self.winfo_exists():
+            return
         for i, _id in enumerate(self.rectangles):
             color_num = self.tetris.get_color(
                 i // self.tetris.FIELD_WIDTH, i % self.tetris.FIELD_WIDTH
             )
             self.canvas.itemconfig(_id, fill=COLORS[color_num])
 
-        self.status_msg["text"] = "Score: {}\nLevel: {}".format(
-            self.tetris.score, self.tetris.level
+        self.status_msg["text"] = "Score: {}\nLevel: {}\nGeneration: {}".format(
+            self.tetris.score, self.tetris.level, self.tetris.generation
         )
         self.game_over_msg["text"] = (
             "GAME OVER.\nPress UP\nto reset" if self.tetris.game_over else ""
@@ -216,9 +216,9 @@ class Application(tk.Frame):
         # Possibles Moves
 
         if self.tetris.current_shape in "SZLOJT":
-            moves = (6, 6)
+            moves = (self.tetris.FIELD_WIDTH - 4, self.tetris.FIELD_WIDTH - 4)
         elif self.tetris.current_shape in "I":
-            moves = (6, 6)
+            moves = (self.tetris.FIELD_WIDTH - 4, self.tetris.FIELD_WIDTH - 4)
 
         # Now check
 
@@ -235,10 +235,10 @@ class Application(tk.Frame):
         for rotate in range(turns):
             cords = self.tetris.get_tetromino_coords()
             for dc in range(moves[1]):
-                if any(cord[1] + dc >= 10 for cord in cords):
+                if any(cord[1] + dc >= self.tetris.FIELD_WIDTH for cord in cords):
                     break
-                for dr in range(22):
-                    if any(cord[0] + 2 + dr >= 22 for cord in cords) or any(
+                for dr in range(self.tetris.FIELD_HEIGHT + 2):
+                    if any(cord[0] + 2 + dr >= self.tetris.FIELD_HEIGHT + 2 for cord in cords) or any(
                         simulated_field[cord[0] + 2 + dr][cord[1] + dc] == 1
                         for cord in cords
                     ):
@@ -257,8 +257,8 @@ class Application(tk.Frame):
             for dc in range(moves[0]):
                 if any(cord[1] - dc < 0 for cord in cords):
                     break
-                for dr in range(22):
-                    if any(cord[0] + 2 + dr >= 22 for cord in cords) or any(
+                for dr in range(self.tetris.FIELD_HEIGHT + 2):
+                    if any(cord[0] + 2 + dr >= self.tetris.FIELD_HEIGHT + 2 for cord in cords) or any(
                         simulated_field[cord[0] + 2 + dr][cord[1] - dc] == 1
                         for cord in cords
                     ):
@@ -289,8 +289,8 @@ class Application(tk.Frame):
             self.tetris.move(0, 1)
         # Down
         cords = self.tetris.get_tetromino_coords()
-        for i in range(22):
-            if any(cord[0] + 2 + i >= 22 for cord in cords) or any(
+        for i in range(self.tetris.FIELD_HEIGHT + 2):
+            if any(cord[0] + 2 + i >= self.tetris.FIELD_HEIGHT + 2 for cord in cords) or any(
                 simulated_field[cord[0] + 2 + i][cord[1]] == 1 for cord in cords
             ):
                 break
@@ -325,7 +325,7 @@ class Application(tk.Frame):
         col_transitions = features.get_col_transition(field, peaks)
 
         # Abs height differences between consecutive cols
-        bumpiness = features.get_bumpiness(peaks)
+        bumpiness = features.get_bumpiness(peaks, field.shape[1])
 
         # Number of cols with zero blocks
         num_pits = np.count_nonzero(np.count_nonzero(field, axis=0) == 0)
@@ -347,7 +347,7 @@ class Application(tk.Frame):
         # Cleared lines
         cleared = 0
         for i in range(len(sum_rows)):
-            if sum_rows[i] == 10:
+            if sum_rows[i] == self.tetris.FIELD_WIDTH:
                 cleared += 1
 
         return np.array(
@@ -369,15 +369,22 @@ class Application(tk.Frame):
         )
 
 
-def comenzar_tetris(ai_model = None):
-    if ai_model:
-        root = tk.Tk()
-        app = Application(ai_model=ai_model, master=root)
-        app.mainloop()
-        return app.tetris.score
-    else:
-        root = tk.Tk()
-        app = Application(master=root)
-        app.mainloop()
+def comenzar_tetris(input_size, weights_init_min, weights_init_max, generation=0, ai_model=None):
+    if ai_model is None:
+        ai_model = Network(input_size, weights_init_min, weights_init_max, 1)
+    
+    root = tk.Tk()
 
-# comenzar_tetris()
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    x_pos = random.randint(0, screen_width - 500) 
+    y_pos = random.randint(0, screen_height - 500) 
+
+    root.geometry(f"+{x_pos}+{y_pos}")
+    
+    app = Application(generation=generation, ai_model=ai_model, master=root)
+    app.mainloop()
+    
+    return app.tetris.score
+
+

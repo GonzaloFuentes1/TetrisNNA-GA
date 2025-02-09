@@ -8,8 +8,8 @@ device = "cpu"
 # GA parameters
 
 elitism_pct = 0.2
-mutation_prob = 0.2
-weights_mutate_power = 0.5
+mutation_prob = 0.4
+weights_mutate_power = 0.1
 
 
 class Network(nn.Module):

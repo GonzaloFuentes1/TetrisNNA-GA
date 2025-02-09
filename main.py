@@ -6,11 +6,7 @@ from copy import deepcopy
 
 # Parallel execution using Joblib
 # Function to be parallelized
-def run_tetris(model):
-    return TetrisAI.comenzar_tetris(ai_model=model)
-
-
-n_cores = 8
+n_cores = 6
 
 # Neur
 input_size = 13
@@ -18,7 +14,7 @@ output_size = 1
 weights_init_min = -1
 weights_init_max = 1
 
-GENERATIONS = 10
+GENERATIONS = 30
 GENERATIONS_SIZE = 50
 old_population = None
 current_population = Population(
@@ -34,7 +30,8 @@ for i in range(GENERATIONS):
     #     fitness_scores.append(score)
     # Paralelo
     fitness_scores = Parallel(n_jobs=n_cores)(
-        delayed(run_tetris)(model) for model in old_population.models
+        delayed(TetrisAI.comenzar_tetris)(generation = i, input_size=input_size, weights_init_min=weights_init_min, weights_init_max = weights_init_max,
+                                        ai_model=model) for model in old_population.models
     )
     old_population.fitnesses = fitness_scores
     current_population = Population(

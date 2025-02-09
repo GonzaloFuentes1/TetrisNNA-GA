@@ -8,8 +8,7 @@ def get_peaks(area):
         else:
             peaks = np.append(peaks, 0)
     return peaks
-  
- 
+
 def get_row_transition(area, highest_peak):
     sum = 0
     # From highest peak to bottom
@@ -31,9 +30,9 @@ def get_col_transition(area, peaks):
     return sum
 
 
-def get_bumpiness(peaks):
+def get_bumpiness(peaks, WIDTH):
     s = 0
-    for i in range(9):
+    for i in range(WIDTH-1):
         s += np.abs(peaks[i] - peaks[i + 1])
     return s
 
