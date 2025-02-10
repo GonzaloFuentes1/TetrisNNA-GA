@@ -76,6 +76,7 @@ Here’s how the parallel execution of multiple Tetris AIs looks in action:
 
 ![Tetris AI Execution](demo.gif)
 
+Full video: https://www.youtube.com/watch?v=io2GUmA6d0o&ab_channel=GonzaloFuentes
 ---
 
 ### Contributing
