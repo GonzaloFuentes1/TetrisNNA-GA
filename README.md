@@ -74,8 +74,7 @@ Modify these values directly in the code to customize the behavior of the simula
 ### Demo
 Here’s how the parallel execution of multiple Tetris AIs looks in action:
 
-[![Tetris AI Execution](https://img.youtube.com/vi/VIDEO_ID/0.jpg)](https://youtu.be/io2GUmA6d0o)
-
+![Tetris AI Execution](demo.gif)
 
 ---
 
