@@ -2,6 +2,8 @@
 
 This repository contains a **genetic algorithm (GA)** implementation combined with a **neural network-based AI** to play the classic game of Tetris. The system evolves neural network models over generations to improve their performance, using parallel processing for efficiency.
 
+**Play it in your browser:** [Tetris GA on Hugging Face](https://huggingface.co/spaces/GonzaloFuentes1/tetris-ga) is a JavaScript port of this project. Train your own agent with a genetic algorithm, battle bots and other people's agents, and submit it to a public leaderboard. Nothing to install.
+
 ### Features
 - **Genetic Algorithm:** Optimizes neural network weights over multiple generations.
 - **Parallel Execution:** Simultaneous Tetris AI instances to speed up training.
